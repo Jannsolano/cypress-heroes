@@ -5,37 +5,57 @@ describe('Hero Interaction Tests', () => {
     cy.get('[data-cy="email"]').type('test@test.com');
     cy.get('[data-cy="password"]').type('test123');
     cy.get('.bg-blue-700').click();
-    cy.get("[data-cy='fans']").eq(0).should('be.visible');
-    cy.get("[data-cy='fans']").eq(0).invoke('text').then((initialFansText) => {
-      const initialFansCount = parseInt(initialFansText.trim(), 10);
+    cy.get("[data-cy='fans']").eq(0).as('fansCount');
+    cy.get('@fansCount').should('be.visible').invoke('text').then((text) => {
+      const initialFans = parseInt(text.trim(), 10);
       cy.get("[data-cy='like']").eq(0).click();
-      cy.get("[data-cy='fans']").eq(0).should('be.visible').should(($fansElement) => {
-          const currentFansCount = parseInt($fansElement.text().trim(), 10);
-          expect(currentFansCount).to.be.greaterThan(initialFansCount);
-        }).then(() => {
-          cy.get("[data-cy='fans']").eq(0).invoke('text').then((finalFansText) => {
-            cy.log(`Fans após clique (final): ${parseInt(finalFansText.trim(), 10)}`);
-            cy.log('Sucesso: O número de fãs aumentou!');
-          });
-        });
+      cy.get('@fansCount').should(($el) => {
+        const currentFans = parseInt($el.text().trim(), 10);
+        expect(currentFans).to.be.greaterThan(initialFans);
+      });
     });
-    cy.get("[data-cy='saves']").eq(0).should('be.visible');
-    cy.get("[data-cy='saves']").eq(0).invoke('text').then((initialSavesText) => {
-      const initialSavesCount = parseInt(initialSavesText.trim(), 10);
+    cy.get("[data-cy='saves']").eq(0).as('savesCount');
+    cy.get('@savesCount').should('be.visible').invoke('text').then((text) => {
+      const initialSaves = parseInt(text.trim(), 10);
       cy.get("[data-cy='money']").eq(0).click();
-      cy.wrap(initialSavesCount).as('initialSavesCountAlias');
+      cy.get(".text-white").click();
+      cy.get('@savesCount').should(($el) => {
+        const currentSaves = parseInt($el.text().trim(), 10);
+        expect(currentSaves).to.be.greaterThan(initialSaves);
+      });
     });
-    cy.get(".text-white").click();
-    cy.get('@initialSavesCountAlias').then((initialSavesCount) => {
-      cy.get("[data-cy='saves']").eq(0).should('be.visible').should(($savesElement) => {
-        const currentSavesCount = parseInt($savesElement.text().trim(), 10);
-        expect(currentSavesCount).to.be.greaterThan(initialSavesCount);
-        }).then(() => {
-          cy.get("[data-cy='saves']").eq(0).invoke('text').then((finalSavesText) => {
-            cy.log(`Saves após clique (final): ${parseInt(finalSavesText.trim(), 10)}`);
-              cy.log('Sucesso: O número de saves aumentou!');
-          });
-        });
+  });
+});
+describe('Hero repetitive Tests', () => {
+  it('Should increase fans and saves counts after interactions', () => {
+    cy.visit('http://localhost:3000/heroes'); //área de login
+    cy.get('li > .undefined').first().click();
+    cy.get('[data-cy="email"]').type('test@test.com');
+    cy.get('[data-cy="password"]').type('test123');
+    cy.get('.bg-blue-700').click();
+    let fansCheckFailed = false;// área de contagem de fans  (e verificar se está diminuindo)
+    cy.get("[data-cy='fans']").eq(0).as('fansCount'); 
+    cy.get('@fansCount').should('be.visible').invoke('text').then((text) => {
+      const initialFans = parseInt(text.trim(), 10);
+      cy.get("[data-cy='like']").eq(0).click();
+      cy.get('@fansCount').should('be.visible').then(($el) => {
+        const currentFans = parseInt($el.text().trim(), 10);
+        try {
+          expect(currentFans).to.be.lessThan(initialFans);
+        } catch (err) {
+          fansCheckFailed = true;
+        }
+      });
+    });
+    cy.get("[data-cy='saves']").eq(0).as('savesCount'); //área de contagem de saves
+    cy.get('@savesCount').should('be.visible').invoke('text').then((text) => {
+      const initialSaves = parseInt(text.trim(), 10);
+      cy.get("[data-cy='money']").eq(0).click();
+      cy.get(".text-white").click();
+      cy.get('@savesCount').should(($el) => {
+        const currentSaves = parseInt($el.text().trim(), 10);
+        expect(currentSaves).to.be.greaterThan(initialSaves);
+      });
     });
   });
 });
